@@ -1,0 +1,61 @@
+@startuml name OpenDep
+title Открытие депозитов и накопительных счетов в Интернет-банке (ИБ). MVP. Задача 4. Консультации по депозитам
+
+top to bottom direction
+
+!include https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+Person(user, "Клиент", "Клиент")
+
+
+
+System_Boundary(bank, "Банк") {
+
+    Person(uBC, "КМ", "Сотрудник БЭК Кредиты")
+    Person(uBD, "ДМ", "Сотрудник БЭК Депозиты")
+    Container_Boundary(dc1, "Датацентр 1"){
+      
+            System_Boundary(back,"Бэк-офис",""){
+            System_Boundary(k8s, "k8s"){
+                System(msCalc,"Калькулятор ставок","asp.net core")
+                System(msCRMBankAdapter,"Адаптер CRM Банка","asp.net core")
+                System(msCRMPartnerAdapter,"Адаптер CRM Партнера","asp.net core")
+              
+            }
+            System(msIbCache,"Кэш", "Redis")
+        }
+        
+        System(ebus,"Шина сообщений","kafka")
+    }
+    System(crm,"CRM Банка","")
+    System(sftp,"SFTP","")
+    
+}
+
+System_Ext(extcrm, "CRM Партнера", "")
+
+Rel(user, crm, "https(tls1.2) UC1.1")
+Rel(user, extcrm, "https(tls1.2) UC1.2")
+
+Rel(uBC, msCalc, "Формирование предложений")
+Rel(uBD, msCalc, "Формирование предложений")
+
+Rel(msCalc,ebus, "Публикация предложений, предложений")
+
+Rel(msCRMBankAdapter, ebus, "mtls Получение предложений UC1.1")
+Rel(msCRMBankAdapter,msIbCache, "Хранение предложений UC1.1")
+Rel(msCRMBankAdapter, crm, "Публикация предложений UC1.1")
+
+Rel(msCRMPartnerAdapter, ebus, "mtls Получение предложений UC1.2")
+Rel(msCRMPartnerAdapter, msIbCache, "Хранение предложений UC1.2")
+Rel(msCRMPartnerAdapter, sftp, "mtls Публикация предложений в виде файла UC1.2")
+
+Rel(extcrm, sftp,"mtls+авторизация Получение файлов с предложениями UC1.2")
+
+
+
+
+
+
+@enduml
+
