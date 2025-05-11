@@ -1,0 +1,50 @@
+@startuml name OpenDep
+title Открытие депозитов и накопительных счетов в Интернет-банке (ИБ). MVP. Задача 4. Консультации по депозитам
+
+top to bottom direction
+
+!include https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+Person(user, "Клиент", "Клиент")
+
+Person(uKCP, "КЦП", "Сотрудник Колл-центра Партнера")
+
+
+
+
+
+System_Boundary(bank, "Банк") {
+    Person(uKCB, "КЦБ", "Сотрудник Колл-центра Банка")
+    Person(uBC, "КМ", "Сотрудник БЭК Кредиты")
+    Person(uBD, "ДМ", "Сотрудник БЭК Депозиты")
+    System(ib,"Интернет-банк","")
+    System(back,"Бэк-офис","")
+    System(abs,"АБС","")
+    System(crm,"CRM Банка","")
+   
+}
+System_Ext(extcrm,"CRM Партнера","")
+
+
+Rel(user, crm, "UC1.1")
+Rel(user, extcrm, "UC1.2")
+
+Rel(uKCP, extcrm, "")
+Rel(uKCB, crm, "")
+
+Rel(uBC, back, "")
+Rel(uBD, back, "")
+
+
+Rel(crm, abs,"")
+Rel(extcrm, bank,"UC1.2 получение файла SFTP")
+Rel(back, abs,"")
+Rel(back, crm,"")
+Rel(ib, back,"")
+
+
+
+
+
+@enduml
+

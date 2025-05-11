@@ -1,0 +1,65 @@
+@startuml name OpenDep
+title Открытие депозитов и накопительных счетов в Интернет-банке (ИБ). MVP. Предложение 1
+
+top to bottom direction
+
+!include https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+Person(user, "Клиент", "Клиент")
+
+Person(uBC, "КМ", "Сотрудник БЭК Кредиты")
+Person(uBD, "ДМ", "Сотрудник БЭК Депозиты")
+
+
+System_Boundary(bank, "Банк") {
+    
+    Container_Boundary(dc1, "Датацентр 1"){
+        System_Boundary(ib,"Интернет-банк new",""){
+            System(api, "API Gateway", "nginx")
+            System_Boundary(k8s, "k8s"){
+                System(msIb, "Микросервисы Депозиты","asp.net core")
+            }
+            System(msIbCache,"Кэш", "Redis")
+        }
+        System_Boundary(back,"Бэк-офис",""){
+            System_Boundary(k8sBack, "k8s"){
+                System(msAbsAdapter,"Адаптер для АБС","asp.net core")
+            }
+        }
+        System(ebus,"Шина сообщений","kafka")
+        System(legacyIb, "Действующий Интернет-банк","ASP.NET MVC")
+    }
+   
+    
+    System(abs,"АБС","")
+}
+
+System_Ext(cb, "ЦБ", "")
+Container_Boundary(tc, "Телеком"){
+    System_Ext(smsgate, "Шлюз СМС", "")
+}
+
+Rel(user, api, "https(tls1.2) UC1.1, UC1.2")
+
+Rel(uBC, abs, "")
+Rel(uBD, abs, "UC1.4")
+
+Rel(msIb, ebus,"mtls UC1.3,UC1.2, UC7.2, получение предложений и ставок")
+Rel(msIb, msIbCache, "Хранение предложений и ставок")
+
+Rel(msAbsAdapter, ebus, "mtls Вычитывание сообщений с возможной скоростью АБС (RateLimit)")
+Rel(msAbsAdapter, abs, "Отправка сообщений со скоростью, допустимой для АБС")
+Rel(abs,msAbsAdapter, "Публикация предложений, ставок")
+Rel(msAbsAdapter, ebus, "mtls Публикация прделожений и ставок")
+Rel(abs, smsgate,"")
+Rel(msIb, smsgate,"")
+
+Rel(smsgate, user,"SMS")
+
+Rel(uBD, cb, "UC1.2, UC1.4")
+
+Rel(api, legacyIb,"https(tls1.2) запросы по продуктам, авторизация")
+Rel(api, msIb,"https(tls1.2) Запросы на открытие депозита")
+
+@enduml
+
